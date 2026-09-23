@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
+	"fmt"
 	"html/template"
 	"io"
 	"log/slog"
@@ -186,10 +187,65 @@ func TestStatisticsShowsWhoVotedForSuggestion(t *testing.T) {
 		t.Fatalf("statistics status = %d, want %d", response.Code, http.StatusOK)
 	}
 	body := response.Body.String()
-	for _, expected := range []string{"<details", "Елена", "Гласували:", "Мария"} {
+	for _, expected := range []string{
+		"<details",
+		"Елена",
+		"Гласували:",
+		"Мария",
+		`href="/submissions?token=secret-token"`,
+		fmt.Sprintf(`href="/submissions/%d?token=secret-token"`, submission.ID),
+	} {
 		if !strings.Contains(body, expected) {
 			t.Fatalf("statistics response does not contain %q", expected)
 		}
+	}
+
+	request = httptest.NewRequest(http.MethodGet, "/submissions?token=secret-token", nil)
+	response = httptest.NewRecorder()
+	h.submissions(response, request)
+	if response.Code != http.StatusOK {
+		t.Fatalf("submissions status = %d, want %d", response.Code, http.StatusOK)
+	}
+	for _, expected := range []string{"<table", "Мария", "Елена"} {
+		if !strings.Contains(response.Body.String(), expected) {
+			t.Fatalf("submissions response does not contain %q", expected)
+		}
+	}
+
+	request = httptest.NewRequest(http.MethodGet, fmt.Sprintf("/submissions/%d?token=secret-token", submission.ID), nil)
+	request.SetPathValue("id", fmt.Sprintf("%d", submission.ID))
+	response = httptest.NewRecorder()
+	h.submission(response, request)
+	if response.Code != http.StatusOK {
+		t.Fatalf("submission status = %d, want %d", response.Code, http.StatusOK)
+	}
+	for _, expected := range []string{"Пълно участие", "Мария", "Елена"} {
+		if !strings.Contains(response.Body.String(), expected) {
+			t.Fatalf("submission response does not contain %q", expected)
+		}
+	}
+}
+
+func TestSubmissionsRequireStatisticsAccess(t *testing.T) {
+	h := newTestHandler(t)
+	h.definition.Statistics.AccessToken = "secret-token"
+
+	for _, handler := range []struct {
+		name   string
+		target string
+		run    func(http.ResponseWriter, *http.Request)
+	}{
+		{name: "list", target: "/submissions", run: h.submissions},
+		{name: "detail", target: "/submissions/1", run: h.submission},
+	} {
+		t.Run(handler.name, func(t *testing.T) {
+			request := httptest.NewRequest(http.MethodGet, handler.target, nil)
+			response := httptest.NewRecorder()
+			handler.run(response, request)
+			if response.Code != http.StatusForbidden {
+				t.Fatalf("status = %d, want %d", response.Code, http.StatusForbidden)
+			}
+		})
 	}
 }
 
@@ -229,7 +285,7 @@ func TestThanksMessageMatchesStatisticsConfiguration(t *testing.T) {
 		{
 			name:       "token only",
 			statistics: form.StatisticsConfig{AccessToken: "secret-token"},
-			wantText:   "само с предоставения токен",
+			wantText:   "Предложенията ти бяха изпратени успешно",
 		},
 		{
 			name:       "private",
@@ -248,8 +304,8 @@ func TestThanksMessageMatchesStatisticsConfiguration(t *testing.T) {
 			if !strings.Contains(rendered.String(), test.wantText) {
 				t.Fatalf("thanks message does not contain %q", test.wantText)
 			}
-			if test.name == "private" && strings.Contains(rendered.String(), "Резултатите няма да бъдат публикувани") {
-				t.Fatal("private thanks message should not mention unpublished results")
+			if !test.statistics.PublicAfterEnd && strings.Contains(rendered.String(), `class="state-note"`) {
+				t.Fatal("non-public thanks message should not show a statistics note")
 			}
 		})
 	}

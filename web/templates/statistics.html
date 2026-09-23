@@ -13,6 +13,11 @@
         <header class="statistics-heading">
             <p>Резултати</p>
             <h1>{{ .Definition.Title }}</h1>
+            <a class="participants-summary" href="/submissions{{ .TokenQuery }}">
+                <strong>{{ .SubmissionCount }}</strong>
+                <span>{{ if eq .SubmissionCount 1 }}човек участва{{ else }}души участваха{{ end }}</span>
+                <span class="participants-arrow" aria-hidden="true">→</span>
+            </a>
         </header>
 
         {{ if .Groups }}
@@ -34,7 +39,7 @@
                                             <p>Гласували:</p>
                                             <ul>
                                                 {{ range .Voters }}
-                                                    <li>{{ . }}</li>
+                                                    <li><a href="{{ .URL }}">{{ .Name }}</a></li>
                                                 {{ end }}
                                             </ul>
                                         </div>

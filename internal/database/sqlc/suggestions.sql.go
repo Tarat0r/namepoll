@@ -87,6 +87,24 @@ func (q *Queries) CreateSuggestion(ctx context.Context, arg CreateSuggestionPara
 	return i, err
 }
 
+const getSubmissionByID = `-- name: GetSubmissionByID :one
+SELECT id, author_name, token_hash, created_at
+FROM submissions
+WHERE id = ?
+`
+
+func (q *Queries) GetSubmissionByID(ctx context.Context, id int64) (Submission, error) {
+	row := q.db.QueryRowContext(ctx, getSubmissionByID, id)
+	var i Submission
+	err := row.Scan(
+		&i.ID,
+		&i.AuthorName,
+		&i.TokenHash,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getSubmissionByTokenHash = `-- name: GetSubmissionByTokenHash :one
 SELECT id, author_name, token_hash, created_at
 FROM submissions
@@ -103,6 +121,40 @@ func (q *Queries) GetSubmissionByTokenHash(ctx context.Context, tokenHash sql.Nu
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const listSubmissions = `-- name: ListSubmissions :many
+SELECT id, author_name, token_hash, created_at
+FROM submissions
+ORDER BY created_at DESC, id DESC
+`
+
+func (q *Queries) ListSubmissions(ctx context.Context) ([]Submission, error) {
+	rows, err := q.db.QueryContext(ctx, listSubmissions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Submission
+	for rows.Next() {
+		var i Submission
+		if err := rows.Scan(
+			&i.ID,
+			&i.AuthorName,
+			&i.TokenHash,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listSuggestionStats = `-- name: ListSuggestionStats :many
@@ -142,16 +194,17 @@ func (q *Queries) ListSuggestionStats(ctx context.Context) ([]ListSuggestionStat
 }
 
 const listSuggestionVoters = `-- name: ListSuggestionVoters :many
-SELECT suggestions.field_name, suggestions.name, submissions.author_name
+SELECT suggestions.field_name, suggestions.name, submissions.id AS submission_id, submissions.author_name
 FROM suggestions
 JOIN submissions ON submissions.id = suggestions.submission_id
 ORDER BY suggestions.field_name, suggestions.name, submissions.created_at, submissions.id
 `
 
 type ListSuggestionVotersRow struct {
-	FieldName  string
-	Name       string
-	AuthorName sql.NullString
+	FieldName    string
+	Name         string
+	SubmissionID int64
+	AuthorName   sql.NullString
 }
 
 func (q *Queries) ListSuggestionVoters(ctx context.Context) ([]ListSuggestionVotersRow, error) {
@@ -163,7 +216,12 @@ func (q *Queries) ListSuggestionVoters(ctx context.Context) ([]ListSuggestionVot
 	var items []ListSuggestionVotersRow
 	for rows.Next() {
 		var i ListSuggestionVotersRow
-		if err := rows.Scan(&i.FieldName, &i.Name, &i.AuthorName); err != nil {
+		if err := rows.Scan(
+			&i.FieldName,
+			&i.Name,
+			&i.SubmissionID,
+			&i.AuthorName,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -180,11 +238,47 @@ func (q *Queries) ListSuggestionVoters(ctx context.Context) ([]ListSuggestionVot
 const listSuggestions = `-- name: ListSuggestions :many
 SELECT id, submission_id, field_name, name, created_at
 FROM suggestions
-ORDER BY created_at DESC
+ORDER BY submission_id DESC, id
 `
 
 func (q *Queries) ListSuggestions(ctx context.Context) ([]Suggestion, error) {
 	rows, err := q.db.QueryContext(ctx, listSuggestions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Suggestion
+	for rows.Next() {
+		var i Suggestion
+		if err := rows.Scan(
+			&i.ID,
+			&i.SubmissionID,
+			&i.FieldName,
+			&i.Name,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listSuggestionsBySubmission = `-- name: ListSuggestionsBySubmission :many
+SELECT id, submission_id, field_name, name, created_at
+FROM suggestions
+WHERE submission_id = ?
+ORDER BY field_name, id
+`
+
+func (q *Queries) ListSuggestionsBySubmission(ctx context.Context, submissionID int64) ([]Suggestion, error) {
+	rows, err := q.db.QueryContext(ctx, listSuggestionsBySubmission, submissionID)
 	if err != nil {
 		return nil, err
 	}

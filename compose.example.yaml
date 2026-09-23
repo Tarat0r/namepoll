@@ -25,7 +25,7 @@ services:
           field_alternate: "#f8edf1"
         statistics:
           public_after_end: false
-          access_token: ""
+          access_token: "pass123"
         fields:
           - name: suggestions
             label: Предложения

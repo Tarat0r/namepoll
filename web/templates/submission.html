@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {{ template "theme-color" .Definition.Theme }}
+    <title>{{ .Submission.AuthorName }} — {{ .Definition.Title }}</title>
+    {{ template "assets" .Definition.Theme }}
+</head>
+<body data-page="submission">
+    <a class="skip-link" href="#main-content">Към съдържанието</a>
+    <main class="statistics-page records-page" id="main-content">
+        <a class="back-link" href="/submissions{{ .TokenQuery }}">← Към всички участия</a>
+
+        <header class="records-heading submission-heading">
+            <p>Пълно участие</p>
+            <h1>{{ .Submission.AuthorName }}</h1>
+            <p class="records-count">Изпратено на {{ .Submission.SubmittedAt }}</p>
+        </header>
+
+        <section class="submission-sheet" aria-label="Изпратени предложения">
+            {{ range .Submission.Fields }}
+                <article class="submission-field">
+                    <h2>{{ .Label }}</h2>
+                    {{ if .Names }}
+                        <ul>
+                            {{ range .Names }}
+                                <li>{{ . }}</li>
+                            {{ end }}
+                        </ul>
+                    {{ else }}
+                        <p class="empty-value">Няма предложения.</p>
+                    {{ end }}
+                </article>
+            {{ end }}
+        </section>
+    </main>
+</body>
+</html>

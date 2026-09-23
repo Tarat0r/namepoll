@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {{ template "theme-color" .Definition.Theme }}
+    <title>Участници — {{ .Definition.Title }}</title>
+    {{ template "assets" .Definition.Theme }}
+</head>
+<body data-page="submissions">
+    <a class="skip-link" href="#main-content">Към съдържанието</a>
+    <main class="statistics-page records-page" id="main-content">
+        <a class="back-link" href="/poll/statistics{{ .TokenQuery }}">← Към статистиката</a>
+
+        <header class="records-heading">
+            <p>Участници</p>
+            <h1>Всички изпратени форми</h1>
+            <p class="records-count">{{ .SubmissionCount }} {{ if eq .SubmissionCount 1 }}участие{{ else }}участия{{ end }}</p>
+        </header>
+
+        {{ if .Submissions }}
+            <div class="submissions-table-wrap">
+                <table class="submissions-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Гласувал</th>
+                            {{ range .FieldLabels }}
+                                <th scope="col">{{ . }}</th>
+                            {{ end }}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{ range .Submissions }}
+                            <tr>
+                                <th scope="row" data-label="Гласувал">
+                                    <a class="submission-author" href="{{ .URL }}">{{ .AuthorName }}</a>
+                                    <span class="submission-date">{{ .SubmittedAt }}</span>
+                                </th>
+                                {{ range .Fields }}
+                                    <td data-label="{{ .Label }}">
+                                        {{ if .Names }}
+                                            <ul class="table-name-list">
+                                                {{ range .Names }}
+                                                    <li>{{ . }}</li>
+                                                {{ end }}
+                                            </ul>
+                                        {{ else }}
+                                            <span class="empty-value">—</span>
+                                        {{ end }}
+                                    </td>
+                                {{ end }}
+                            </tr>
+                        {{ end }}
+                    </tbody>
+                </table>
+            </div>
+        {{ else }}
+            <section class="empty-state">
+                <div class="state-symbol" aria-hidden="true">○</div>
+                <h2>Все още няма участия</h2>
+                <p>Изпратените форми ще се появят тук.</p>
+            </section>
+        {{ end }}
+    </main>
+</body>
+</html>

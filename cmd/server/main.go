@@ -69,6 +69,7 @@ func run(logger *slog.Logger) error {
 	mux.HandleFunc("GET /poll", h.poll)
 	mux.HandleFunc("POST /poll/suggestions", h.suggestions)
 	mux.HandleFunc("GET /submissions", h.submissions)
+	mux.HandleFunc("GET /submissions/{id}", h.submission)
 	mux.HandleFunc("GET /poll/thanks", h.thanks)
 	mux.HandleFunc("GET /poll/statistics", h.statistics)
 

@@ -693,6 +693,219 @@ input[type="text"].has-character-warning {
     font-weight: 580;
 }
 
+.result-voters a {
+    color: inherit;
+    text-decoration-color: var(--color-accent);
+    text-underline-offset: 0.16em;
+}
+
+.result-voters a:hover {
+    color: var(--color-accent-strong);
+}
+
+.participants-summary {
+    display: inline-grid;
+    grid-template-columns: auto auto auto;
+    gap: 0.55rem;
+    align-items: baseline;
+    margin-top: 1.5rem;
+    padding: 0.65rem 0.9rem 0.65rem 0.8rem;
+    border: 2px solid var(--color-accent);
+    border-radius: 0.8rem 1.2rem 0.9rem 1.05rem;
+    color: var(--color-text);
+    background: var(--color-result-surface);
+    text-decoration: none;
+    transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.participants-summary:hover {
+    border-color: var(--color-accent-strong);
+    background: var(--color-result-alternate);
+}
+
+.participants-summary strong {
+    color: var(--color-accent-strong);
+    font-size: 1.35rem;
+    line-height: 1;
+}
+
+.participants-summary span {
+    font-weight: 620;
+}
+
+.participants-arrow {
+    transition: translate 150ms ease;
+}
+
+.participants-summary:hover .participants-arrow {
+    translate: 0.2rem 0;
+}
+
+.records-page {
+    width: min(88rem, calc(100% - 3rem));
+    padding-bottom: 5rem;
+}
+
+.back-link {
+    display: inline-block;
+    margin-top: clamp(2rem, 5vw, 4rem);
+    color: var(--color-accent-strong);
+    font-weight: 650;
+    text-decoration-color: var(--color-accent);
+    text-underline-offset: 0.22em;
+}
+
+.records-heading {
+    max-width: 55rem;
+    margin: 2.4rem 0 2.8rem;
+}
+
+.records-heading > p:first-child {
+    margin-bottom: 0.75rem;
+    color: var(--color-accent-strong);
+    font-weight: 720;
+}
+
+.records-heading h1 {
+    margin-bottom: 1rem;
+    font-size: clamp(2.8rem, 7vw, 5.6rem);
+    font-weight: 660;
+    letter-spacing: -0.05em;
+    line-height: 0.98;
+    text-wrap: balance;
+}
+
+.records-count {
+    margin-bottom: 0;
+    color: var(--color-text-muted);
+    font-size: 1rem;
+    font-weight: 590;
+}
+
+.submissions-table-wrap {
+    overflow-x: auto;
+    border: 3px solid var(--color-border);
+    border-radius: 1.25rem 2rem 1.45rem 1.7rem;
+    background: var(--color-surface);
+    box-shadow: var(--shadow-paper);
+}
+
+.submissions-table {
+    width: 100%;
+    min-width: 46rem;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.submissions-table th,
+.submissions-table td {
+    padding: 1rem 1.15rem;
+    border-bottom: 1px solid var(--color-tint);
+    vertical-align: top;
+}
+
+.submissions-table thead th {
+    color: var(--color-text-muted);
+    background: var(--color-result-alternate);
+    font-size: 0.82rem;
+    font-weight: 720;
+}
+
+.submissions-table tbody tr:last-child > * {
+    border-bottom: 0;
+}
+
+.submissions-table tbody tr:nth-child(even) {
+    background: var(--color-result-surface);
+}
+
+.submission-author {
+    display: block;
+    color: var(--color-text);
+    font-size: 1rem;
+    font-weight: 700;
+    text-decoration-color: var(--color-accent);
+    text-underline-offset: 0.18em;
+}
+
+.submission-author:hover {
+    color: var(--color-accent-strong);
+}
+
+.submission-date {
+    display: block;
+    margin-top: 0.25rem;
+    color: var(--color-text-muted);
+    font-size: 0.76rem;
+    font-weight: 520;
+}
+
+.table-name-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.55rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.table-name-list li {
+    font-weight: 590;
+}
+
+.table-name-list li:not(:last-child)::after {
+    content: ",";
+    color: var(--color-accent-strong);
+}
+
+.empty-value {
+    color: var(--color-text-muted);
+}
+
+.submission-heading h1 {
+    max-width: 14ch;
+}
+
+.submission-sheet {
+    max-width: 58rem;
+    padding: clamp(1.4rem, 4vw, 2.5rem);
+    border: 3px solid var(--color-border);
+    border-radius: 1.35rem 2.3rem 1.6rem 1.95rem;
+    background: var(--color-surface);
+    box-shadow: var(--shadow-paper);
+}
+
+.submission-field + .submission-field {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px dashed var(--color-border);
+}
+
+.submission-field h2 {
+    margin-bottom: 0.8rem;
+    color: var(--color-text-muted);
+    font-size: 0.92rem;
+    font-weight: 720;
+}
+
+.submission-field ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.submission-field li {
+    padding: 0.55rem 0.85rem;
+    border: 2px solid var(--color-accent);
+    border-radius: 0.65rem 0.9rem 0.7rem 0.85rem;
+    background: var(--color-result-surface);
+    font-size: 1.05rem;
+    font-weight: 650;
+}
+
 .empty-state {
     width: min(36rem, 100%);
     padding: 3.5rem;
@@ -802,6 +1015,94 @@ input[type="text"].has-character-warning {
 
     .empty-state {
         padding: 2.5rem 1.25rem;
+    }
+}
+
+@media (max-width: 42rem) {
+    .records-page {
+        width: min(100% - 1.5rem, 88rem);
+    }
+
+    .records-heading {
+        margin-top: 1.8rem;
+    }
+
+    .records-heading h1 {
+        font-size: clamp(2.6rem, 13vw, 4.4rem);
+    }
+
+    .submissions-table-wrap {
+        overflow: visible;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    .submissions-table {
+        min-width: 0;
+    }
+
+    .submissions-table thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+        clip-path: inset(50%);
+    }
+
+    .submissions-table,
+    .submissions-table tbody,
+    .submissions-table tr,
+    .submissions-table th,
+    .submissions-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .submissions-table tbody {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .submissions-table tbody tr {
+        padding: 0.45rem 1rem;
+        border: 2px solid var(--color-border);
+        border-radius: 1rem 1.35rem 1.05rem 1.2rem;
+        background: var(--color-surface);
+        box-shadow: 0 0.3rem 0 var(--color-shadow-layer);
+    }
+
+    .submissions-table th,
+    .submissions-table td {
+        display: grid;
+        grid-template-columns: minmax(6.5rem, 0.42fr) minmax(0, 1fr);
+        gap: 0.75rem;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--color-tint);
+    }
+
+    .submissions-table tr > :last-child {
+        border-bottom: 0;
+    }
+
+    .submissions-table th::before,
+    .submissions-table td::before {
+        content: attr(data-label);
+        color: var(--color-text-muted);
+        font-size: 0.76rem;
+        font-weight: 720;
+    }
+
+    .submission-author,
+    .submission-date {
+        grid-column: 2;
+    }
+
+    .submission-date {
+        margin-top: -0.55rem;
     }
 }
 

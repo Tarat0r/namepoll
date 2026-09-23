@@ -14,6 +14,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -68,7 +69,12 @@ type statePage struct {
 type statisticItem struct {
 	Name   string
 	Count  int64
-	Voters []string
+	Voters []statisticVoter
+}
+
+type statisticVoter struct {
+	Name string
+	URL  string
 }
 
 type statisticGroup struct {
@@ -77,8 +83,37 @@ type statisticGroup struct {
 }
 
 type statisticsPage struct {
+	Definition      *form.Definition
+	Groups          []statisticGroup
+	SubmissionCount int64
+	TokenQuery      string
+}
+
+type submissionFieldView struct {
+	Label string
+	Names []string
+}
+
+type submissionView struct {
+	ID          int64
+	AuthorName  string
+	SubmittedAt string
+	Fields      []submissionFieldView
+	URL         string
+}
+
+type submissionsPage struct {
+	Definition      *form.Definition
+	Submissions     []submissionView
+	FieldLabels     []string
+	SubmissionCount int
+	TokenQuery      string
+}
+
+type submissionPage struct {
 	Definition *form.Definition
-	Groups     []statisticGroup
+	Submission submissionView
+	TokenQuery string
 }
 
 type pendingSuggestion struct {
@@ -295,21 +330,91 @@ func (h Handler) validateSubmission(postForm url.Values) (
 }
 
 func (h Handler) submissions(w http.ResponseWriter, r *http.Request) {
-	submissionCount, err := h.queries.CountSubmissions(r.Context())
+	if !h.canViewStatistics(r) {
+		http.Error(w, "Изпратените форми не са достъпни без валиден токен.", http.StatusForbidden)
+		return
+	}
+
+	submissions, err := h.queries.ListSubmissions(r.Context())
 	if err != nil {
-		h.log().Error("submission count failed", "error", err)
+		h.log().Error("submissions load failed", "error", err)
 		http.Error(w, "Предложенията не може да бъдат заредени.", http.StatusInternalServerError)
 		return
 	}
-	suggestionCount, err := h.queries.CountSuggestions(r.Context())
+	suggestions, err := h.queries.ListSuggestions(r.Context())
 	if err != nil {
-		h.log().Error("suggestion count failed", "error", err)
+		h.log().Error("submission suggestions load failed", "error", err)
 		http.Error(w, "Предложенията не може да бъдат заредени.", http.StatusInternalServerError)
 		return
 	}
 
-	h.log().Info("submission totals requested", "submissions", submissionCount, "field_values", suggestionCount)
-	fmt.Fprintf(w, "Изпращания: %d; попълнени полета: %d\n", submissionCount, suggestionCount)
+	tokenQuery := h.statisticsTokenQuery(r)
+	suggestionsBySubmission := make(map[int64][]sqlc.Suggestion)
+	for _, suggestion := range suggestions {
+		suggestionsBySubmission[suggestion.SubmissionID] = append(suggestionsBySubmission[suggestion.SubmissionID], suggestion)
+	}
+
+	views := make([]submissionView, 0, len(submissions))
+	for _, submission := range submissions {
+		views = append(views, h.submissionView(submission, suggestionsBySubmission[submission.ID], tokenQuery))
+	}
+
+	fieldLabels := make([]string, 0, len(h.definition.Fields))
+	for _, field := range h.definition.Fields {
+		fieldLabels = append(fieldLabels, field.Label)
+	}
+
+	data := submissionsPage{
+		Definition:      h.definition,
+		Submissions:     views,
+		FieldLabels:     fieldLabels,
+		SubmissionCount: len(views),
+		TokenQuery:      tokenQuery,
+	}
+	if err := h.render(w, http.StatusOK, "submissions.html", data); err != nil {
+		h.renderError(w, "submissions", err)
+	}
+}
+
+func (h Handler) submission(w http.ResponseWriter, r *http.Request) {
+	if !h.canViewStatistics(r) {
+		http.Error(w, "Изпратената форма не е достъпна без валиден токен.", http.StatusForbidden)
+		return
+	}
+
+	submissionID, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil || submissionID < 1 {
+		http.NotFound(w, r)
+		return
+	}
+
+	submission, err := h.queries.GetSubmissionByID(r.Context(), submissionID)
+	if errors.Is(err, sql.ErrNoRows) {
+		http.NotFound(w, r)
+		return
+	}
+	if err != nil {
+		h.log().Error("submission load failed", "error", err, "submission_id", submissionID)
+		http.Error(w, "Изпратената форма не може да бъде заредена.", http.StatusInternalServerError)
+		return
+	}
+
+	suggestions, err := h.queries.ListSuggestionsBySubmission(r.Context(), submissionID)
+	if err != nil {
+		h.log().Error("submission suggestions load failed", "error", err, "submission_id", submissionID)
+		http.Error(w, "Изпратената форма не може да бъде заредена.", http.StatusInternalServerError)
+		return
+	}
+
+	tokenQuery := h.statisticsTokenQuery(r)
+	data := submissionPage{
+		Definition: h.definition,
+		Submission: h.submissionView(submission, suggestions, tokenQuery),
+		TokenQuery: tokenQuery,
+	}
+	if err := h.render(w, http.StatusOK, "submission.html", data); err != nil {
+		h.renderError(w, "submission", err)
+	}
 }
 
 func (h Handler) thanks(w http.ResponseWriter, r *http.Request) {
@@ -358,25 +463,44 @@ func (h Handler) statistics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	groups := h.groupStatistics(stats, voters)
-	data := statisticsPage{Definition: h.definition, Groups: groups}
+	submissionCount, err := h.queries.CountSubmissions(r.Context())
+	if err != nil {
+		h.log().Error("statistics submission count failed", "error", err)
+		http.Error(w, "Статистиката не може да бъде заредена.", http.StatusInternalServerError)
+		return
+	}
+
+	tokenQuery := h.statisticsTokenQuery(r)
+	groups := h.groupStatistics(stats, voters, tokenQuery)
+	data := statisticsPage{
+		Definition:      h.definition,
+		Groups:          groups,
+		SubmissionCount: submissionCount,
+		TokenQuery:      tokenQuery,
+	}
 	if err := h.render(w, http.StatusOK, "statistics.html", data); err != nil {
 		h.renderError(w, "statistics", err)
 	}
 }
 
-func (h Handler) groupStatistics(rows []sqlc.ListSuggestionStatsRow, voterRows []sqlc.ListSuggestionVotersRow) []statisticGroup {
-	votersByField := make(map[string]map[string][]string)
+func (h Handler) groupStatistics(rows []sqlc.ListSuggestionStatsRow, voterRows []sqlc.ListSuggestionVotersRow, tokenQuery string) []statisticGroup {
+	votersByField := make(map[string]map[string][]statisticVoter)
 	for _, row := range voterRows {
 		if votersByField[row.FieldName] == nil {
-			votersByField[row.FieldName] = make(map[string][]string)
+			votersByField[row.FieldName] = make(map[string][]statisticVoter)
 		}
 
 		voter := "Анонимен"
 		if row.AuthorName.Valid && strings.TrimSpace(row.AuthorName.String) != "" {
 			voter = row.AuthorName.String
 		}
-		votersByField[row.FieldName][row.Name] = append(votersByField[row.FieldName][row.Name], voter)
+		votersByField[row.FieldName][row.Name] = append(
+			votersByField[row.FieldName][row.Name],
+			statisticVoter{
+				Name: voter,
+				URL:  fmt.Sprintf("/submissions/%d%s", row.SubmissionID, tokenQuery),
+			},
+		)
 	}
 
 	byField := make(map[string][]statisticItem)
@@ -401,6 +525,43 @@ func (h Handler) groupStatistics(rows []sqlc.ListSuggestionStatsRow, voterRows [
 		groups = append(groups, statisticGroup{Label: fieldName, Items: items})
 	}
 	return groups
+}
+
+func (h Handler) submissionView(submission sqlc.Submission, suggestions []sqlc.Suggestion, tokenQuery string) submissionView {
+	byField := make(map[string][]string)
+	for _, suggestion := range suggestions {
+		byField[suggestion.FieldName] = append(byField[suggestion.FieldName], suggestion.Name)
+	}
+
+	fields := make([]submissionFieldView, 0, len(h.definition.Fields))
+	for _, field := range h.definition.Fields {
+		fields = append(fields, submissionFieldView{
+			Label: field.Label,
+			Names: byField[field.Name],
+		})
+	}
+
+	authorName := "Анонимен"
+	if submission.AuthorName.Valid && strings.TrimSpace(submission.AuthorName.String) != "" {
+		authorName = submission.AuthorName.String
+	}
+
+	return submissionView{
+		ID:          submission.ID,
+		AuthorName:  authorName,
+		SubmittedAt: submission.CreatedAt.Format("02.01.2006, 15:04"),
+		Fields:      fields,
+		URL:         fmt.Sprintf("/submissions/%d%s", submission.ID, tokenQuery),
+	}
+}
+
+func (h Handler) statisticsTokenQuery(r *http.Request) string {
+	configured := h.definition.Statistics.AccessToken
+	provided := r.URL.Query().Get("token")
+	if configured == "" || subtle.ConstantTimeCompare([]byte(configured), []byte(provided)) != 1 {
+		return ""
+	}
+	return "?token=" + url.QueryEscape(provided)
 }
 
 func (h Handler) canViewStatistics(r *http.Request) bool {
