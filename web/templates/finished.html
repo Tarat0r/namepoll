@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {{ template "theme-color" .Definition.Theme }}
+    <title>Анкетата приключи — {{ .Definition.Title }}</title>
+    {{ template "assets" .Definition.Theme }}
+</head>
+<body data-page="finished">
+    <a class="skip-link" href="#main-content">Към съдържанието</a>
+    <main class="state-page" id="main-content">
+        <section class="state-sheet" aria-labelledby="state-title">
+            <div class="state-symbol state-symbol-finished" aria-hidden="true">—</div>
+            <p class="state-status">Анкетата приключи</p>
+            <h1 id="state-title">{{ .Definition.Title }}</h1>
+            <p class="state-lead">Периодът за изпращане на предложения изтече.</p>
+            {{ if .Definition.Statistics.AccessToken }}
+                <div class="state-note"><p>Статистиката е достъпна само с валиден токен.</p></div>
+            {{ end }}
+        </section>
+    </main>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {{ template "theme-color" .Theme }}
+    <title>Благодарим ти</title>
+    {{ template "assets" .Theme }}
+</head>
+<body data-page="thanks">
+    <a class="skip-link" href="#main-content">Към съдържанието</a>
+    <main class="state-page" id="main-content">
+        <section class="state-sheet" aria-labelledby="state-title">
+            <div class="state-symbol state-symbol-success" aria-hidden="true">♡</div>
+            <h1 id="state-title">Благодарим ти!</h1>
+            <p class="state-lead">Предложенията ти бяха изпратени успешно.</p>
+            <div class="state-note">
+                {{ if .Statistics.PublicAfterEnd }}
+                    <p>Можеш да се върнеш тук до края на анкетата. След това резултатите ще бъдат показани автоматично.</p>
+                {{ else if .Statistics.AccessToken }}
+                    <p>Резултатите ще бъдат достъпни само с предоставения токен.</p>
+                {{ end }}
+            </div>
+        </section>
+    </main>
+</body>
+</html>

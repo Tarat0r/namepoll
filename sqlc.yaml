@@ -1,0 +1,20 @@
+version: "2"
+
+sql:
+  - engine: "sqlite"
+    schema: "internal/database/schema.sql"
+    queries:
+      - "queries/suggestions.sql"
+      - "queries/database.sql"
+      - "queries/rate_limits.sql"
+    gen:
+      go:
+        package: "sqlc"
+        out: "internal/database/sqlc"
+  - engine: "sqlite"
+    schema: "internal/database/migration_schema.sql"
+    queries: "queries/migrations.sql"
+    gen:
+      go:
+        package: "migrationsqlc"
+        out: "internal/database/migrationsqlc"

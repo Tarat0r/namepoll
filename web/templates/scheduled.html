@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {{ template "theme-color" .Definition.Theme }}
+    <title>Анкетата предстои — {{ .Definition.Title }}</title>
+    {{ template "assets" .Definition.Theme }}
+</head>
+<body data-page="scheduled">
+    <a class="skip-link" href="#main-content">Към съдържанието</a>
+    <main class="state-page" id="main-content">
+        <section class="state-sheet" aria-labelledby="state-title">
+            <div class="state-symbol" aria-hidden="true">○</div>
+            <p class="state-status">Анкетата предстои</p>
+            <h1 id="state-title">{{ .Definition.Title }}</h1>
+            <p class="state-lead">Анкетата все още не е започнала. Предложенията ще могат да се изпращат от</p>
+            <p class="prominent-date"><time datetime="{{ .Definition.StartDate.Format "2006-01-02T15:04:05Z07:00" }}">{{ .Definition.StartDate.Format "02.01.2006 г., 15:04 ч." }}</time></p>
+        </section>
+    </main>
+</body>
+</html>

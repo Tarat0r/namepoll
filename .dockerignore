@@ -1,0 +1,10 @@
+.git
+.gitignore
+.agents
+.codex
+data
+Dockerfile*
+compose*.yaml
+README*
+*.log
+*.tmp

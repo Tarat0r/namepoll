@@ -1,0 +1,19 @@
+{{ define "assets" }}
+    <link rel="stylesheet" href="/static/app.css">
+    <style>
+        :root {
+            {{ with .Background }}--theme-background: {{ . }};{{ end }}
+            {{ with .Surface }}--theme-surface: {{ . }};{{ end }}
+            {{ with .Text }}--theme-text: {{ . }};{{ end }}
+            {{ with .Accent }}--theme-accent: {{ . }};{{ end }}
+            {{ with .AccentStrong }}--theme-accent-strong: {{ . }};{{ end }}
+            {{ with .Field }}--theme-field: {{ . }};{{ end }}
+            {{ with .FieldAlternate }}--theme-field-alternate: {{ . }};{{ end }}
+        }
+    </style>
+    <script src="/static/app.js" defer></script>
+{{ end }}
+
+{{ define "theme-color" }}
+    <meta name="theme-color" content="{{ if .Background }}{{ .Background }}{{ else }}#fffdfd{{ end }}">
+{{ end }}

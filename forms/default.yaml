@@ -1,0 +1,30 @@
+title: "Кое име ти харесва?"
+description: "Сподели любимите си предложения — ще се радваме на всяка идея."
+
+start_date: 2026-09-20T10:00:00+03:00
+end_date: 2026-09-25T23:59:59+03:00
+
+theme:
+  background: "#fffdfd"
+  surface: "#fff7fa"
+  text: "#4b2b37"
+  accent: "#d7829d"
+  accent_strong: "#a84b6a"
+  field: "#fffdfd"
+  field_alternate: "#f8edf1"
+
+statistics:
+  # Everyone can see the statistics after the poll ends.
+  # Set this to false to keep results private or require a token.
+  public_after_end: false
+
+  # When set, statistics are also available at any time through:
+  # /poll/statistics?token=YOUR_TOKEN
+  access_token: "1"
+
+fields:
+  - name: suggestions
+    label: Предложения
+    type: text
+    count: 5
+    required_count: 1

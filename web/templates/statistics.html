@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {{ template "theme-color" .Definition.Theme }}
+    <title>Статистика — {{ .Definition.Title }}</title>
+    {{ template "assets" .Definition.Theme }}
+</head>
+<body data-page="statistics">
+    <a class="skip-link" href="#main-content">Към съдържанието</a>
+    <main class="statistics-page" id="main-content">
+        <header class="statistics-heading">
+            <p>Резултати</p>
+            <h1>{{ .Definition.Title }}</h1>
+        </header>
+
+        {{ if .Groups }}
+            <div class="statistics-groups">
+                {{ range .Groups }}
+                    <section class="statistics-group" data-statistics-group>
+                        <h2>{{ .Label }}</h2>
+                        <ol class="results-list">
+                            {{ range .Items }}
+                                <li data-result data-count="{{ .Count }}">
+                                    <span class="result-bar" aria-hidden="true"></span>
+                                    <details class="result-details">
+                                        <summary class="result-summary">
+                                            <span class="result-name">{{ .Name }}</span>
+                                            <span class="result-count">{{ .Count }} бр.</span>
+                                            <span class="result-toggle" aria-hidden="true"></span>
+                                        </summary>
+                                        <div class="result-voters">
+                                            <p>Гласували:</p>
+                                            <ul>
+                                                {{ range .Voters }}
+                                                    <li>{{ . }}</li>
+                                                {{ end }}
+                                            </ul>
+                                        </div>
+                                    </details>
+                                </li>
+                            {{ end }}
+                        </ol>
+                    </section>
+                {{ end }}
+            </div>
+        {{ else }}
+            <section class="empty-state">
+                <div class="state-symbol" aria-hidden="true">○</div>
+                <h2>Все още няма предложения</h2>
+                <p>Резултатите ще се появят тук след първото изпращане.</p>
+            </section>
+        {{ end }}
+    </main>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {{ template "theme-color" .Definition.Theme }}
+    <title>{{ .Definition.Title }}</title>
+    {{ template "assets" .Definition.Theme }}
+</head>
+<body data-page="poll">
+    <a class="skip-link" href="#main-content">Към съдържанието</a>
+
+    <main class="poll-layout" id="main-content">
+        <section class="poll-intro" aria-labelledby="poll-title">
+            <header class="poll-heading">
+                <h1 id="poll-title">{{ .Definition.Title }}</h1>
+                <p>{{ .Definition.Description }}</p>
+            </header>
+
+            <dl class="poll-period" aria-label="Период на анкетата">
+                <div>
+                    <dt>От</dt>
+                    <dd><time datetime="{{ .Definition.StartDate.Format "2006-01-02T15:04:05Z07:00" }}">{{ .Definition.StartDate.Format "02.01.2006 г., 15:04 ч." }}</time></dd>
+                </div>
+                <div>
+                    <dt>До</dt>
+                    <dd><time datetime="{{ .Definition.EndDate.Format "2006-01-02T15:04:05Z07:00" }}">{{ .Definition.EndDate.Format "02.01.2006 г., 15:04 ч." }}</time></dd>
+                </div>
+            </dl>
+        </section>
+
+        <section class="form-sheet" aria-label="Формуляр за предложения">
+            {{ if .Error }}
+                <div class="notice notice-error" role="alert">
+                    <span aria-hidden="true">!</span>
+                    <p>{{ .Error }}</p>
+                </div>
+            {{ end }}
+
+            <form class="poll-form" method="POST" action="/poll/suggestions" data-poll-form>
+                <div class="field-group author-field">
+                    <label for="author_name">А ти как се казваш? <span>(незадължително)</span></label>
+                    <input type="text" id="author_name" name="author_name" value="{{ .AuthorName }}" autocomplete="name" autocapitalize="words" {{ if .AuthorError }}aria-invalid="true" aria-describedby="author_name_error"{{ end }}>
+                    {{ if .AuthorError }}
+                        <p class="field-error" id="author_name_error">{{ .AuthorError }}</p>
+                    {{ end }}
+                </div>
+
+                {{ range .Fields }}
+                    <fieldset class="suggestion-group" data-suggestion-group>
+                        <legend>Твоите предложения</legend>
+                        <div class="fieldset-heading">
+                            <p>
+                                {{ if eq .RequiredCount 1 }}Сподели поне едно име{{ else }}Сподели поне {{ .RequiredCount }} имена{{ end }} — и до {{ len .Inputs }}, ако имаш още идеи.
+                            </p>
+                            <p class="suggestion-count" data-suggestion-count aria-live="polite"></p>
+                        </div>
+
+                        {{ $field := . }}
+                        <div class="suggestion-list">
+                            {{ range .Inputs }}
+                                <div class="suggestion-row" data-suggestion-row>
+                                    <label class="visually-hidden" for="{{ .ID }}">{{ $field.Label }} {{ .Number }}</label>
+                                    <input class="suggestion-input" type="text" id="{{ .ID }}" name="{{ $field.Name }}" value="{{ .Value }}" placeholder="Име, което ти харесва" autocomplete="off" autocapitalize="words" spellcheck="false" {{ if .Required }}required{{ end }} {{ if $field.Error }}aria-invalid="true" aria-describedby="{{ $field.Name }}_error"{{ end }}>
+                                </div>
+                            {{ end }}
+                        </div>
+
+                        <p class="character-hint" data-character-hint hidden aria-live="polite">Използвай букви на кирилица и тире.</p>
+
+                        {{ if .Error }}
+                            <p class="field-error" id="{{ .Name }}_error">{{ .Error }}</p>
+                        {{ end }}
+                    </fieldset>
+                {{ end }}
+
+                <button class="submit-button" type="submit" data-submit-button>
+                    <span>Сподели предложенията</span>
+                    <span class="button-mark" aria-hidden="true">♡</span>
+                </button>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

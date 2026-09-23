@@ -1,0 +1,39 @@
+name: namepoll
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: namepoll:local
+    restart: unless-stopped
+    ports:
+      - "${NAMEPOLL_PORT:-8080}:8080"
+    environment:
+      NAMEPOLL_CONFIG_YAML: |
+        title: "Кое име ти харесва?"
+        description: "Сподели любимите си предложения — ще се радваме на всяка идея."
+        start_date: 2026-09-20T10:00:00+03:00
+        end_date: 2026-09-25T23:59:59+03:00
+        theme:
+          background: "#fffdfd"
+          surface: "#fff7fa"
+          text: "#4b2b37"
+          accent: "#d7829d"
+          accent_strong: "#a84b6a"
+          field: "#fffdfd"
+          field_alternate: "#f8edf1"
+        statistics:
+          public_after_end: false
+          access_token: ""
+        fields:
+          - name: suggestions
+            label: Предложения
+            type: text
+            count: 5
+            required_count: 1
+    volumes:
+      - namepoll-data:/app/data
+
+volumes:
+  namepoll-data:
