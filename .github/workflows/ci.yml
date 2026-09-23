@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify application
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Download Go modules
+        run: go mod download
+
+      - name: Check Go formatting
+        shell: bash
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [[ -n "$unformatted" ]]; then
+            echo "The following files need gofmt:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: Set up sqlc
+        uses: sqlc-dev/setup-sqlc@v4
+        with:
+          sqlc-version: "1.31.1"
+
+      - name: Verify generated database code
+        shell: bash
+        run: |
+          sqlc generate
+          git diff --exit-code -- internal/database/sqlc internal/database/migrationsqlc
+
+      - name: Run tests
+        run: go test ./...
+
+      - name: Run go vet
+        run: go vet ./...
+
+      - name: Validate Docker Compose
+        run: docker compose -f compose.example.yaml config --quiet
+
+  container:
+    name: Build container
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build without publishing
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: namepoll:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
